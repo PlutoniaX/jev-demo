@@ -87,14 +87,13 @@ class ReplayJev:
 class SimulatedJev:
     """Stand-in for Jev when there is no API access.
 
-    Answers are drawn around the human label for each question: confident when
-    the label is clear, near 0.5 when the label is 'unsure', with a small rate of
-    wrong-but-confident answers so the agreement figures are not perfect.
+    Answers are drawn around the human label for each question: mostly confident
+    when the label is clear, near 0.5 when the label is 'unsure', and a small rate
+    of answers leaning the wrong way so the agreement figures are not perfect.
     """
 
     name = "simulated"
-    CONFIDENT_ERROR_RATE = 0.002
-    HESITANT_RATE = 0.02
+    ERROR_RATE = 0.006
 
     def __init__(self, model: str = "jev-latest (simulated)"):
         self.model = model
@@ -118,13 +117,12 @@ class SimulatedJev:
     def _noul(self, rng: random.Random, label: Any) -> float:
         if label == "unsure" or label is None:
             return rng.uniform(0.32, 0.68)
-        p_true = bool(label)
-        r = rng.random()
-        if r < self.CONFIDENT_ERROR_RATE:
-            p_true = not p_true
-        elif r < self.CONFIDENT_ERROR_RATE + self.HESITANT_RATE:
-            return rng.uniform(0.55, 0.72) if p_true else rng.uniform(0.28, 0.45)
-        return rng.uniform(0.86, 0.995) if p_true else rng.uniform(0.004, 0.12)
+        if rng.random() < self.ERROR_RATE:
+            # Wrong answers lean the wrong way but are rarely extreme, as with a calibrated model.
+            x = rng.betavariate(4, 1.5)
+            return 1 - x if label else x
+        x = rng.betavariate(14, 1.1)  # mostly near 1, with a thin tail into the unsure band
+        return x if label else 1 - x
 
     def _score(self, rng: random.Random, level: int, n: int, criteria: list) -> dict:
         weights = [rng.uniform(0.0, 0.08) for _ in range(n)]

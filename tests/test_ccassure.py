@@ -47,3 +47,18 @@ def test_replay_reads_recordings(tmp_path):
     rec.write_text(json.dumps(row) + "\n")
     result = ReplayJev(rec).ask(state, questions, {})
     assert result["answers"]["q"]["noul"] == 0.9 and result["model"] == "jev-1.13.0"
+
+
+def test_agent_guardrail_verdicts():
+    from ccassure import agent_guardrail as g
+    verdicts = {c.id: g.check(SimulatedJev(), c)["verdict"] for c in g.CASES}
+    assert verdicts["ACT-01"] == g.ALLOW
+    assert verdicts["ACT-03"] == g.BLOCK and verdicts["ACT-04"] == g.BLOCK
+    assert verdicts["ACT-06"] == g.HOLD  # hard limit in code wins over Jev
+
+
+def test_hard_limit_holds_even_when_jev_is_confident():
+    from ccassure import agent_guardrail as g
+    answers = {"customer_requested": noul(0.99), "within_policy": noul(0.99), "manipulation_risk": noul(0.01)}
+    assert g.decide(answers, {"amount_usd": 5000})[0] == g.HOLD
+    assert g.decide(answers, {"amount_usd": 50})[0] == g.ALLOW

@@ -9,7 +9,12 @@ The bank, Fernhill Bank, N.A., is fictional. It runs two AI systems:
 
 The demo covers 30 days of synthetic activity: 720 conversations, 240 credit decline notices and 9 AI change records. Two incidents are seeded into that month for the demo to catch.
 
-Open `docs/index.html` in a browser to see the executive dashboard.
+There are two ways in:
+
+| For | Open | What it is |
+|---|---|---|
+| Executives | `docs/index.html` | One-page dashboard: control health, the two incidents, continuous testing compared with sampling, and the exception queue |
+| Risk, audit and technology leads | `notebooks/jev_continuous_agentic_assurance.ipynb` | A step-by-step explanation of what Jev does, how the controls work, a preventive guardrail for an AI agent's actions, threshold tuning, audit evidence and limits |
 
 ## The controls
 
@@ -80,6 +85,23 @@ Every synthetic record carries the label a careful tester would give. This label
 
 In simulated mode this figure is made up. In live mode it is a real measure of Jev on this control set, and it is the number to tune thresholds and question wording against.
 
+## The notebook
+
+`notebooks/jev_continuous_agentic_assurance.ipynb` explains the method from first principles, and every step runs:
+
+1. Why sampling fails for AI systems.
+2. Jev's three answer types.
+3. A first call.
+4. The policy layer that turns probabilities into pass, exception or review.
+5. Testing the whole month.
+6. The maths of sampling.
+7. **Agentic assurance.** Before Fernhill's servicing agent runs a refund, fee waiver, payment or account closure, Jev checks the proposed action. Code then allows it, blocks it, or holds it for a person (`ccassure/agent_guardrail.py`). The cases include a prompt injection, a third party directing an older customer's payment, and an agent over-reaching on its own.
+8. Measuring agreement and tuning the "unsure" band.
+9. The audit log.
+10. Limits, including the point that Jev is itself a model under model risk management.
+
+The committed copy was executed with the simulator. With `TYPESAFE_API_KEY` set, re-run all cells to get live answers and latencies. Set the key in your shell, never in a notebook cell.
+
 ## Layout
 
 ```
@@ -88,6 +110,8 @@ ccassure/population.py   synthetic Fernhill Bank evidence and seeded incidents
 ccassure/jev.py          Live (typesafe-sdk), Replay and Simulated backends
 ccassure/engine.py       runs every control on every record, sampling comparison, audit log
 ccassure/report.py       embeds results into dashboard/template.html -> docs/index.html
+ccassure/agent_guardrail.py  preventive check on an AI agent's proposed actions
+notebooks/               explainer notebook (executed in simulated mode)
 tests/                   policy and pipeline tests (pytest)
 ```
 
