@@ -1,0 +1,6 @@
+typesafe-sdk>=0.7.1
+pytest>=8
+# notebook
+pandas>=2
+matplotlib>=3.8
+jupyterlab>=4
